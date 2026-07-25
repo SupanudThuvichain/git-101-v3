@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบแผนที่จราจรและทางแยกไฟแดง จังหวัดเพชรบุรี | Phetchaburi Traffic Lights Map</title>
+  <meta name="description"
+    content="ระบบแผนที่ปักหมุดจุดไฟแดงและทางแยกสำคัญในจังหวัดเพชรบุรี พิกัด GPS แม่นยำตรงตาม Google Maps 100% พร้อมระบบกดเปิดนำทางและคำแนะนำจราจร">
+
+  <!-- Google Fonts: Inter & Prompt for Thai -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #080c14;
+      --bg-secondary: #0f172a;
+      --bg-card: #162032;
+      --bg-card-hover: #1e293b;
+      --bg-glass: rgba(15, 23, 42, 0.82);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(99, 102, 241, 0.35);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-indigo: #6366f1;
+      --accent-indigo-light: #818cf8;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-cyan: #06b6d4;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 8px;
+      --shadow-xl: 0 25px 60px rgba(0, 0, 0, 0.5);
+      --shadow-glow: 0 0 35px rgba(99, 102, 241, 0.2);
+    }
+
+    body {
+      font-family: 'Prompt', 'Inter', system-ui, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Ambient Background Glows */
+    .bg-glow-1 {
+      position: fixed;
+      top: -150px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, rgba(16, 185, 129, 0.05) 50%, transparent 70%);
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-glow-2 {
+      position: fixed;
+      bottom: -200px;
+      right: -100px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(239, 68, 68, 0.12) 0%, transparent 70%);
+      filter: blur(90px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Header & Navigation */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 72px;
+      z-index: 1000;
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+
+    .nav-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      height: 100%;
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      color: white;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+    }
+
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .brand-title span {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    .nav-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--text-primary);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.65rem 1.35rem;
+      border-radius: var(--radius-md);
+      font-size: 0.92rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: white;
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 35px rgba(99, 102, 241, 0.5);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      border-color: var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    /* Hero Section */
+    .hero {
+      position: relative;
+      padding: 8.5rem 1.5rem 4rem;
+      max-width: 1280px;
+      margin: 0 auto;
+      z-index: 1;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3.5rem;
+      align-items: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.45rem 1.1rem;
+      border-radius: 9999px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: var(--accent-indigo-light);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-badge .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 10px var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.5;
+        transform: scale(1.2);
+      }
+    }
+
+    .hero-title {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-title span {
+      background: linear-gradient(135deg, #818cf8, #06b6d4, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      line-height: 1.7;
+    }
+
+    /* Hero Search Bar */
+    .hero-search-box {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.4rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-xl);
+      margin-bottom: 2rem;
+      transition: border-color 0.2s;
+    }
+
+    .hero-search-box:focus-within {
+      border-color: var(--accent-indigo);
+      box-shadow: 0 0 25px rgba(99, 102, 241, 0.2);
+    }
+
+    .hero-search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+
+    .hero-search-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Quick Stats */
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .stat-item-num {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1;
+      margin-bottom: 0.35rem;
+    }
+
+    .stat-item-num.indigo {
+      color: var(--accent-indigo-light);
+    }
+
+    .stat-item-num.green {
+      color: var(--accent-green);
+    }
+
+    .stat-item-num.amber {
+      color: var(--accent-amber);
+    }
+
+    .stat-item-num.red {
+      color: var(--accent-red);
+    }
+
+    .stat-item-label {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+
+    /* Visual Mockup Container */
+    .hero-visual-card {
+      position: relative;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-xl);
+      background: var(--bg-card);
+    }
+
+    .visual-top-bar {
+      height: 36px;
+      background: rgba(15, 23, 42, 0.9);
+      padding: 0 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dot-btn {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot-btn.red {
+      background: #ef4444;
+    }
+
+    .dot-btn.yellow {
+      background: #f59e0b;
+    }
+
+    .dot-btn.green {
+      background: #10b981;
+    }
+
+    .window-title {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    .hero-img-wrap {
+      position: relative;
+      width: 100%;
+      height: 380px;
+    }
+
+    .hero-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .hero-img-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 50%, rgba(8, 12, 20, 0.95) 100%);
+      display: flex;
+      align-items: flex-end;
+      padding: 1.5rem;
+    }
+
+    .hero-card-floating-badge {
+      background: var(--bg-glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      width: 100%;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Section Styling */
+    .section {
+      padding: 5rem 1.5rem;
+      max-width: 1280px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 650px;
+      margin: 0 auto 3.5rem;
+    }
+
+    .section-subtitle {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent-indigo-light);
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 0.85rem;
+    }
+
+    .section-desc {
+      font-size: 1rem;
+      color: var(--text-secondary);
+    }
+
+    /* Feature Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem 1.5rem;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--accent-indigo);
+      box-shadow: var(--shadow-glow);
+      background: var(--bg-card-hover);
+    }
+
+    .feature-icon-box {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .feature-icon-box.red {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--accent-red);
+    }
+
+    .feature-icon-box.green {
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--accent-green);
+    }
+
+    .feature-icon-box.amber {
+      background: rgba(245, 158, 11, 0.12);
+      color: var(--accent-amber);
+    }
+
+    .feature-icon-box.cyan {
+      background: rgba(6, 182, 212, 0.12);
+      color: var(--accent-cyan);
+    }
+
+    .feature-card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.6rem;
+    }
+
+    .feature-card-desc {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Live Map Preview Container */
+    .map-embed-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-xl);
+    }
+
+    .embed-header {
+      padding: 1rem 1.5rem;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .embed-title {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .iframe-wrapper {
+      width: 100%;
+      height: 600px;
+      position: relative;
+    }
+
+    .iframe-wrapper iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* District Grid */
+    .district-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+    }
+
+    .district-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.35rem;
+      text-decoration: none;
+      color: var(--text-primary);
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .district-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent-indigo-light);
+      background: var(--bg-card-hover);
+    }
+
+    .district-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .district-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .district-count {
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: rgba(99, 102, 241, 0.12);
+      color: var(--accent-indigo-light);
+    }
+
+    .district-spots {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Major Intersections Spotlight Cards */
+    .spotlight-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .spotlight-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .spotlight-badge {
+      align-self: flex-start;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--accent-red);
+      margin-bottom: 0.85rem;
+    }
+
+    .spotlight-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .spotlight-desc {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      flex: 1;
+    }
+
+    .spotlight-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* FAQ Section */
+    .faq-list {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .faq-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .faq-question {
+      padding: 1.25rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-primary);
+    }
+
+    .faq-answer {
+      padding: 0 1.5rem 1.25rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      border-top: 1px solid var(--border-color);
+      padding-top: 1rem;
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 5rem;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      padding: 3rem 1.5rem 2rem;
+      text-align: center;
+    }
+
+    .footer-content {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .footer-logo {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .footer-text {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Responsive Breakdown */
+    @media (max-width: 1024px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .district-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .spotlight-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .hero-title {
+        font-size: 2.2rem;
+      }
+
+      .hero-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .district-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .spotlight-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .nav-links {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Glow Backgrounds -->
+  <div class="bg-glow-1"></div>
+  <div class="bg-glow-2"></div>
+
+  <!-- Navigation Navbar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="#" class="brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-traffic-light"></i>
+        </div>
+        <div class="brand-title">
+          แผนที่ไฟแดงเพชรบุรี
+          <span>Phetchaburi Traffic Lights GIS</span>
+        </div>
+      </a>
+
+      <div class="nav-links">
+        <a href="#features" class="nav-link">จุดเด่น</a>
+        <a href="#map-preview" class="nav-link">ตัวอย่างแผนที่</a>
+        <a href="#districts" class="nav-link">รายอำเภอ</a>
+        <a href="#faq" class="nav-link">คำถามที่พบบ่อย</a>
+        <a href="map.html" class="btn btn-primary">
+          <i class="fa-solid fa-map-location-dot"></i> เปิดแผนที่เต็มจอ
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="hero-grid">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="dot"></span> 26 จุดไฟแดง GPS แม่นยำ 100%
+        </div>
+        <h1 class="hero-title">
+          ค้นหา & นำทาง <br>
+          <span>จุดไฟแดง จังหวัดเพชรบุรี</span>
+        </h1>
+        <p class="hero-subtitle">
+          ระบบแผนที่ GIS รวบรวมตำแหน่งสัญญาณไฟจราจร สี่แยก สามแยก และทางแยกต่างระดับ ทั่วจังหวัดเพชรบุรี
+          พร้อมปุ่มเปิดนำทาง Google Maps แบบ 1-Click
+        </p>
+
+        <!-- Quick Search Form -->
+        <form class="hero-search-box" action="map.html" method="GET" onsubmit="handleHeroSearch(event)">
+          <i class="fa-solid fa-magnifying-glass"
+            style="margin-left: 0.8rem; color: var(--text-muted); display: flex; align-items: center;"></i>
+          <input type="text" id="heroSearchInput" class="hero-search-input"
+            placeholder="พิมพ์ชื่อแยก เช่น บันไดอิฐ, ต้นมะม่วง, ท่ายาง, ชะอำ...">
+          <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.25rem;">
+            ค้นหา
+          </button>
+        </form>
+
+        <!-- Stats Row -->
+        <div class="hero-stats">
+          <div class="stat-item">
+            <div class="stat-item-num red">26</div>
+            <div class="stat-item-label">จุดไฟแดง/ทางแยก</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-item-num green">7</div>
+            <div class="stat-item-label">อำเภอครอบคลุม</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-item-num amber">100%</div>
+            <div class="stat-item-label">พิกัด GPS แม่นยำ</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-item-num indigo">1-Click</div>
+            <div class="stat-item-label">เปิดนำทาง Maps</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Visual Mockup -->
+      <div class="hero-visual-card">
+        <div class="visual-top-bar">
+          <div class="window-dots">
+            <div class="dot-btn red"></div>
+            <div class="dot-btn yellow"></div>
+            <div class="dot-btn green"></div>
+          </div>
+          <div class="window-title">map.html &mdash; Phetchaburi GIS</div>
+        </div>
+        <div class="hero-img-wrap">
+          <img src="assets/hero_bg.png" alt="Phetchaburi Traffic Map GIS Mockup">
+          <div class="hero-img-overlay">
+            <div class="hero-card-floating-badge">
+              <div
+                style="width: 40px; height: 40px; border-radius: 50%; background: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: white;">
+                <i class="fa-solid fa-location-arrow"></i>
+              </div>
+              <div>
+                <div style="font-weight: 700; font-size: 0.95rem;">พร้อมใช้งานระบบนำทาง GPS</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">กดเลือกจุดทางแยก และคลิกเพื่อนำทางทันที
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Key Features Section -->
+  <section class="section" id="features">
+    <div class="section-header">
+      <div class="section-subtitle">Core Capabilities</div>
+      <h2 class="section-title">ฟีเจอร์เด่นระบบแผนที่ไฟแดง</h2>
+      <p class="section-desc">ออกแบบมาเพื่อผู้ใช้ทาง นักท่องเที่ยว และชาวเพชรบุรี ให้สัญจรผ่านทางแยกต่างๆ
+        ได้อย่างปลอดภัยและมั่นใจ</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon-box red">
+          <i class="fa-solid fa-location-crosshairs"></i>
+        </div>
+        <h3 class="feature-card-title">พิกัด GPS แม่นยำ 100%</h3>
+        <p class="feature-card-desc">อัปเดตละติจูดและลองจิจูดระดับ 6 ตำแหน่งตรงจุดตัดทางแยกจริงบน Google Maps และ
+          OpenStreetMap</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-box green">
+          <i class="fa-solid fa-diamond-turn-right"></i>
+        </div>
+        <h3 class="feature-card-title">กดนำทางในคลิกเดียว</h3>
+        <p class="feature-card-desc">คลิกปุ่มนำทางใน Popup ของหมุดแผนที่ เพื่อเปิด Google Maps Navigation
+          รับเสียงพูดนำทางไปจุดแยกทันที</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-box amber">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3 class="feature-card-title">แจ้งเตือนรูปแบบไฟจราจร</h3>
+        <p class="feature-card-desc">ระบุข้อสังเกตสัญญาณไฟจราจร เช่น รอบไฟเขียวปล่อยสวนกัน 2 ฝั่ง
+          หรือจุดชะลอตัวช่วงเทศกาล</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-box cyan">
+          <i class="fa-solid fa-layer-group"></i>
+        </div>
+        <h3 class="feature-card-title">สลับโหมดแผนที่หลากหลาย</h3>
+        <p class="feature-card-desc">เลือกสลับแผนที่ได้ทั้ง Dark Mode, Light Mode, Satellite ภาพถ่ายดาวเทียม และ
+          OpenTopoMap</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live Map Preview Section -->
+  <section class="section" id="map-preview">
+    <div class="section-header">
+      <div class="section-subtitle">Live Interactive GIS Map</div>
+      <h2 class="section-title">ทดลองใช้งานแผนที่ Interactive</h2>
+      <p class="section-desc">สามารถซูม เลื่อนดูหมุด คลิกดูรายละเอียด หรือเปิดหน้าต่างเต็มจอเพื่อการใช้งานที่สะดวกที่สุด
+      </p>
+    </div>
+
+    <div class="map-embed-section">
+      <div class="embed-header">
+        <div class="embed-title">
+          <i class="fa-solid fa-map" style="color: var(--accent-indigo-light);"></i>
+          <span>แผนที่จุดไฟแดง จังหวัดเพชรบุรี (26 ตำแหน่ง)</span>
+        </div>
+        <a href="map.html" class="btn btn-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.82rem;">
+          <i class="fa-solid fa-up-right-from-square"></i> เปิดแบบเต็มจอ (Fullscreen)
+        </a>
+      </div>
+      <div class="iframe-wrapper">
+        <iframe src="map.html" title="Phetchaburi Traffic Map Interactive Preview"></iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- District Breakdown Section -->
+  <section class="section" id="districts">
+    <div class="section-header">
+      <div class="section-subtitle">Coverage Areas</div>
+      <h2 class="section-title">จุดไฟแดงแบ่งตามอำเภอ</h2>
+      <p class="section-desc">ครอบคลุมทั้ง 7 อำเภอหลักของจังหวัดเพชรบุรี
+        ทั้งเส้นทางเพชรเกษมและเส้นทางเข้าแหล่งท่องเที่ยว</p>
+    </div>
+
+    <div class="district-grid">
+      <a href="map.html?filter=อ.เมือง" class="district-card">
+        <div>
+          <div class="district-header">
+            <span class="district-name">อ.เมืองเพชรบุรี</span>
+            <span class="district-count">12 จุด</span>
+          </div>
+          <p class="district-spots">แยกบันไดอิฐ, แยกต้นมะม่วง, แยกสหไทย, แยกโรงเรียนอรุณประดิษฐ, แยกเขาวัง,
+            แยกวัดมหาธาตุ ฯลฯ</p>
+        </div>
+      </a>
+
+      <a href="map.html?filter=อ.ท่ายาง" class="district-card">
+        <div>
+          <div class="district-header">
+            <span class="district-name">อ.ท่ายาง</span>
+            <span class="district-count">3 จุด</span>
+          </div>
+          <p class="district-spots">สามแยกท่ายาง (ทล.4), สี่แยกตลาดท่ายาง, สามแยกทางเข้าแก่งกระจาน</p>
+        </div>
+      </a>
+
+      <a href="map.html?filter=อ.ชะอำ" class="district-card">
+        <div>
+          <div class="district-header">
+            <span class="district-name">อ.ชะอำ</span>
+            <span class="district-count">4 จุด</span>
+          </div>
+          <p class="district-spots">สี่แยกชะอำ (ถ.นราธิป), ทางแยกต่างระดับชะอำ (ทล.37), สามแยกหาดชะอำ, สามแยกหนองแก</p>
+        </div>
+      </a>
+
+      <a href="map.html?filter=อ.เขาย้อย" class="district-card">
+        <div>
+          <div class="district-header">
+            <span class="district-name">อ.เขาย้อย</span>
+            <span class="district-count">2 จุด</span>
+          </div>
+          <p class="district-spots">สามแยกเขาย้อย (ประตูสู่ภาคใต้), สี่แยกตลาดสดเขาย้อย</p>
+        </div>
+      </a>
+
+      <a href="map.html?filter=อ.บ้านลาด" class="district-card">
+        <div>
+          <div class="district-header">
+            <span class="district-name">อ.บ้านลาด</span>
+            <span class="district-count">3 จุด</span>
+          </div>
+          <p class="district-spots">สามแยกบ้านลาด (ทล.4), สี่แยกตลาดบ้านลาด, สี่แยกห้วยท่าช้าง</p>
+        </div>
+      </a>
+
+      <a href="map.html?filter=อ.บ้านแหลม" class="district-card">
+        <div>
+          <div class="district-header">
+            <span class="district-name">อ.บ้านแหลม</span>
+            <span class="district-count">1 จุด</span>
+          </div>
+          <p class="district-spots">สามแยกบ้านแหลม (ทล.3176 มุ่งหน้าถนน Scenic Route เลียบอ่าวไทย)</p>
+        </div>
+      </a>
+
+      <a href="map.html?filter=อ.แก่งกระจาน" class="district-card">
+        <div>
+          <div class="district-header">
+            <span class="district-name">อ.แก่งกระจาน</span>
+            <span class="district-count">1 จุด</span>
+          </div>
+          <p class="district-spots">สามแยกไฟแดงตัวอำเภอแก่งกระจาน (ทล.3219 เส้นทางขึ้นเขื่อนและอุทยานฯ)</p>
+        </div>
+      </a>
+
+      <a href="map.html" class="district-card"
+        style="background: rgba(99, 102, 241, 0.08); border-color: var(--accent-indigo);">
+        <div>
+          <div class="district-header">
+            <span class="district-name" style="color: var(--accent-indigo-light);">ทั้งจังหวัดเพชรบุรี</span>
+            <span class="district-count" style="background: var(--accent-indigo); color: white;">26 จุด</span>
+          </div>
+          <p class="district-spots" style="color: var(--text-primary);">ดูจุดไฟแดงและทางแยกทั้งหมดบนแผนที่ Interactive
+          </p>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Major Intersections Spotlight Section -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-subtitle">Traffic Spotlight</div>
+      <h2 class="section-title">ทางแยกไฟแดงสายหลักสำคัญ</h2>
+      <p class="section-desc">ทางแยกที่มีปริมาณการจราจรหนาแน่นและมีข้อควรระวังในการขับขี่</p>
+    </div>
+
+    <div class="spotlight-grid">
+      <div class="spotlight-card">
+        <span class="spotlight-badge">อ.เมืองเพชรบุรี</span>
+        <h3 class="spotlight-title">สี่แยกบันไดอิฐ (กิโลเมตร 0)</h3>
+        <p class="spotlight-desc">จุดตัดถนนเพชรเกษมสายเก่า (ถ.คีรีรัถยา) กับถนนบันไดอิฐ ทางขึ้นพระนครคีรี (เขาวัง)
+          มีไฟจราจรปล่อยตามจังหวะทิศทาง</p>
+        <div class="spotlight-footer">
+          <span>13.1042°N, 99.9416°E</span>
+          <a href="map.html?search=บันไดอิฐ"
+            style="color: var(--accent-indigo-light); text-decoration: none; font-weight: 600;">ดูบนแมพ &rarr;</a>
+        </div>
+      </div>
+
+      <div class="spotlight-card">
+        <span class="spotlight-badge">อ.ท่ายาง</span>
+        <h3 class="spotlight-title">สามแยกท่ายาง (เพชรเกษม ทล.4)</h3>
+        <p class="spotlight-desc">สามแยกใหญ่ทางเข้าอำเภอท่ายางบนถนนเพชรเกษม
+          มีปริมาณรถหนาแน่นสะสมมากช่วงเทศกาลลงใต้และเดินทางกลับกรุงเทพฯ</p>
+        <div class="spotlight-footer">
+          <span>12.9731°N, 99.9022°E</span>
+          <a href="map.html?search=ท่ายาง"
+            style="color: var(--accent-indigo-light); text-decoration: none; font-weight: 600;">ดูบนแมพ &rarr;</a>
+        </div>
+      </div>
+
+      <div class="spotlight-card">
+        <span class="spotlight-badge">อ.ชะอำ</span>
+        <h3 class="spotlight-title">สี่แยกชะอำ (ทล.4 / ถ.นราธิป)</h3>
+        <p class="spotlight-desc">สี่แยกหลักอำเภอชะอำ ตัดเข้าถนนนราธิปมุ่งหน้าสู่ชายหาดชะอำ
+          รถหนาแน่นมากช่วงเสาร์-อาทิตย์ และวันหยุดนักขัตฤกษ์</p>
+        <div class="spotlight-footer">
+          <span>12.7983°N, 99.9678°E</span>
+          <a href="map.html?search=ชะอำ"
+            style="color: var(--accent-indigo-light); text-decoration: none; font-weight: 600;">ดูบนแมพ &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="section" id="faq">
+    <div class="section-header">
+      <div class="section-subtitle">FAQ</div>
+      <h2 class="section-title">คำถามที่พบบ่อย (FAQ)</h2>
+    </div>
+
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>พิกัดไฟแดงในเว็บนี้ตรงกับ Google Maps หรือไม่?</span>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          ตรงกัน 100% ครับ ทุกตำแหน่งละติจูดและลองจิจูดได้รับการตรวจสอบกับพิกัดทางแยกจริงบน OpenStreetMap และ Google
+          Maps พร้อมปุ่มกดเปิดระบบนำทางฉุกเฉินได้ทันที
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>จะกดนำทางไปยังจุดไฟแดงได้อย่างไร?</span>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          เมื่อคลิกเลือกหมุดทางแยกบนแผนที่ จะมี Popup เด้งขึ้นมา ให้กดปุ่ม <strong>"🚗 นำทางใน Maps"</strong>
+          ระบบจะเปิดแอป Google Maps หรือ Apple Maps บนโทรศัพท์ของคุณเพื่อเริ่มนำทางด้วยเสียงทันทีครับ
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>ทำไมช่วงเทศกาลไฟแดงเพชรบุรีบางจุดจึงเป็นไฟกะพริบ?</span>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          ในช่วงเทศกาลที่มีปริมาณรถลงภาคใต้หรือกลับกรุงเทพฯ จำนวนมาก
+          เจ้าหน้าที่ตำรวจจราจรอาจปรับเปลี่ยนสัญญาณไฟเป็นไฟกะพริบ หรือเปิดทางตรงยาวเพื่อเร่งระบายจราจรบนถนนเพชรเกษม
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-logo">
+        🎓 คณะเทคโนโลยีสารสนเทศ | มหาวิทยาลัยราชภัฏเพชรบุรี (PBRU FIT)
+      </div>
+      <p class="footer-text">
+        ระบบแผนที่สารสนเทศภูมิศาสตร์ (GIS) เพื่อการเดินทางและความปลอดภัยทางถนน จังหวัดเพชรบุรี &copy; 2026
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    function handleHeroSearch(e) {
+      e.preventDefault();
+      const val = document.getElementById('heroSearchInput').value.trim();
+      if (val) {
+        window.location.href = `map.html?search=${encodeURIComponent(val)}`;
+      } else {
+        window.location.href = 'map.html';
+      }
+    }
+  </script>
+</body>
+
+</html>

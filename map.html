@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แผนที่จุดไฟแดง จังหวัดเพชรบุรี | Traffic Lights Map</title>
+  <meta name="description"
+    content="แผนที่แสดงตำแหน่งจุดไฟแดงทั้งหมดในจังหวัดเพชรบุรี ครอบคลุมอำเภอเมือง ท่ายาง ชะอำ บ้านลาด และเขาย้อย">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-secondary: #111827;
+      --bg-card: #1a2235;
+      --bg-card-hover: #1f2b42;
+      --bg-glass: rgba(17, 24, 39, 0.85);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(99, 102, 241, 0.3);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-indigo: #6366f1;
+      --accent-indigo-light: #818cf8;
+      --accent-red: #ef4444;
+      --accent-red-light: #f87171;
+      --accent-amber: #f59e0b;
+      --accent-green: #10b981;
+      --accent-cyan: #06b6d4;
+      --accent-rose: #f43f5e;
+      --gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6);
+      --gradient-red: linear-gradient(135deg, #ef4444, #f97316);
+      --gradient-glass: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));
+      --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.5);
+      --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.15);
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --sidebar-width: 400px;
+      --header-height: 64px;
+    }
+
+    html[data-theme="light"] {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f1f5f9;
+      --bg-glass: rgba(255, 255, 255, 0.88);
+      --border-color: rgba(0, 0, 0, 0.1);
+      --border-glow: rgba(99, 102, 241, 0.2);
+      --text-primary: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --accent-red-light: #dc2626;
+      --accent-indigo-light: #4f46e5;
+      --shadow-xl: 0 10px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    /* Map Theme Control (Top-Right) */
+    .map-theme-control {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      z-index: 800;
+      background: var(--bg-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.3rem;
+      display: flex;
+      gap: 0.25rem;
+      box-shadow: var(--shadow-xl);
+    }
+
+    .theme-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.45rem 0.85rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .theme-btn:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+    }
+
+    .theme-btn.active {
+      background: var(--gradient-primary);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+
+    html[data-theme="light"] .leaflet-tile-pane,
+    html[data-theme="satellite"] .leaflet-tile-pane,
+    html[data-theme="terrain"] .leaflet-tile-pane {
+      filter: none !important;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* =================== HEADER =================== */
+    .app-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--header-height);
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.5rem;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-logo {
+      width: 40px;
+      height: 40px;
+      background: var(--gradient-red);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: white;
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    }
+
+    .header-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .header-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      padding: 0.4rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent-red-light);
+    }
+
+    .header-badge .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-red);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+      }
+
+      50% {
+        opacity: 0.7;
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+      }
+    }
+
+    .btn-toggle-sidebar {
+      display: none;
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+
+    .btn-toggle-sidebar:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+    }
+
+    /* =================== MAIN LAYOUT =================== */
+    .app-layout {
+      display: flex;
+      height: calc(100vh - var(--header-height));
+      margin-top: var(--header-height);
+    }
+
+    /* =================== SIDEBAR =================== */
+    .sidebar {
+      width: var(--sidebar-width);
+      min-width: var(--sidebar-width);
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 500;
+    }
+
+    .sidebar-header {
+      padding: 1.25rem 1.25rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-box {
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 0.65rem 0.9rem 0.65rem 2.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 0.88rem;
+      font-family: inherit;
+      transition: all 0.2s;
+      outline: none;
+    }
+
+    .search-box input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-box input:focus {
+      border-color: var(--accent-indigo);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    .search-box .search-icon {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-tab {
+      padding: 0.35rem 0.7rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .filter-tab:hover {
+      border-color: var(--accent-indigo);
+      color: var(--accent-indigo-light);
+    }
+
+    .filter-tab.active {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: var(--accent-indigo);
+      color: var(--accent-indigo-light);
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .stat-chip {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 0.6rem 0.5rem;
+      text-align: center;
+    }
+
+    .stat-chip-value {
+      font-size: 1.3rem;
+      font-weight: 800;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-chip-label {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    /* Marker List */
+    .marker-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+
+    .marker-list::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .marker-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .marker-list::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 99px;
+    }
+
+    .marker-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+      padding: 0.85rem;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+      margin-bottom: 0.25rem;
+    }
+
+    .marker-item:hover {
+      background: var(--bg-card);
+      border-color: var(--border-color);
+    }
+
+    .marker-item.active {
+      background: rgba(99, 102, 241, 0.08);
+      border-color: var(--accent-indigo);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
+    }
+
+    .marker-item-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .icon-intersection {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--accent-red-light);
+    }
+
+    .icon-junction {
+      background: rgba(245, 158, 11, 0.12);
+      color: var(--accent-amber);
+    }
+
+    .icon-overpass {
+      background: rgba(6, 182, 212, 0.12);
+      color: var(--accent-cyan);
+    }
+
+    .marker-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .marker-item-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.2rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .marker-item-desc {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .marker-item-meta {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.35rem;
+    }
+
+    .meta-tag {
+      font-size: 0.68rem;
+      font-weight: 500;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--accent-indigo-light);
+    }
+
+    .meta-tag.amphoe {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--accent-green);
+    }
+
+    .marker-item-number {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      width: 22px;
+      text-align: center;
+      padding-top: 0.2rem;
+    }
+
+    /* No results */
+    .no-results {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .no-results i {
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+      opacity: 0.3;
+      display: block;
+    }
+
+    .no-results p {
+      font-size: 0.9rem;
+    }
+
+    /* =================== MAP CONTAINER =================== */
+    .map-wrapper {
+      flex: 1;
+      position: relative;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Custom Leaflet Popup */
+    .leaflet-popup-content-wrapper {
+      background: var(--bg-card) !important;
+      color: var(--text-primary) !important;
+      border-radius: var(--radius-md) !important;
+      border: 1px solid var(--border-color) !important;
+      box-shadow: var(--shadow-xl) !important;
+      padding: 0 !important;
+    }
+
+    .leaflet-popup-tip {
+      background: var(--bg-card) !important;
+      border: 1px solid var(--border-color) !important;
+    }
+
+    .leaflet-popup-content {
+      margin: 0 !important;
+      width: 280px !important;
+    }
+
+    .popup-content {
+      padding: 1rem;
+    }
+
+    .popup-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .popup-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .popup-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .popup-desc {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 0.6rem;
+    }
+
+    .popup-meta {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .popup-tag {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .popup-tag.type {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--accent-red-light);
+    }
+
+    .popup-tag.location {
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--accent-green);
+    }
+
+    .popup-tag.road {
+      background: rgba(99, 102, 241, 0.12);
+      color: var(--accent-indigo-light);
+    }
+
+    .popup-coords {
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    /* Floating controls on map */
+    .map-floating-controls {
+      position: absolute;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 800;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .map-float-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-glass);
+      backdrop-filter: blur(10px);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .map-float-btn:hover {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border-color: var(--accent-indigo);
+    }
+
+    /* Legend overlay */
+    .map-legend {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      z-index: 800;
+      background: var(--bg-glass);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.85rem 1rem;
+      min-width: 180px;
+    }
+
+    .legend-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      padding: 0.25rem 0;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .legend-dot.red {
+      background: var(--accent-red);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    }
+
+    .legend-dot.amber {
+      background: var(--accent-amber);
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+    }
+
+    .legend-dot.cyan {
+      background: var(--accent-cyan);
+      box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
+    }
+
+    /* Custom marker - fix alignment & zoom shift */
+    .custom-marker {
+      position: relative !important;
+      width: 28px !important;
+      height: 28px !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      background: transparent !important;
+    }
+
+    .marker-pin {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: white;
+      font-weight: 700;
+      border: 2.5px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+      z-index: 2;
+      box-sizing: border-box;
+    }
+
+    .marker-pin.red {
+      background: var(--accent-red);
+    }
+
+    .marker-pin.amber {
+      background: var(--accent-amber);
+    }
+
+    .marker-pin.cyan {
+      background: var(--accent-cyan);
+    }
+
+    .marker-pulse {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      z-index: 1;
+      animation: marker-pulse-anim 2.5s infinite;
+      pointer-events: none;
+      box-sizing: border-box;
+    }
+
+    border-radius: 50%;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    animation: marker-pulse-anim 2.5s infinite;
+    }
+
+    .marker-pulse.red {
+      background: rgba(239, 68, 68, 0.3);
+    }
+
+    .marker-pulse.amber {
+      background: rgba(245, 158, 11, 0.3);
+    }
+
+    .marker-pulse.cyan {
+      background: rgba(6, 182, 212, 0.3);
+    }
+
+    @keyframes marker-pulse-anim {
+      0% {
+        transform: scale(1);
+        opacity: 0.7;
+      }
+
+      100% {
+        transform: scale(2.5);
+        opacity: 0;
+      }
+    }
+
+    /* =================== RESPONSIVE =================== */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        top: var(--header-height);
+        left: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+        z-index: 900;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 899;
+      }
+
+      .sidebar-overlay.open {
+        display: block;
+      }
+
+      .btn-toggle-sidebar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .map-legend {
+        bottom: 0.75rem;
+        left: 0.75rem;
+      }
+
+      .map-floating-controls {
+        bottom: 0.75rem;
+        right: 0.75rem;
+      }
+
+      :root {
+        --sidebar-width: 340px;
+      }
+
+      .header-badge span {
+        display: none;
+      }
+    }
+
+    /* Leaflet tile dark filter */
+    .leaflet-tile-pane {
+      filter: brightness(0.85) contrast(1.1) saturate(0.9);
+    }
+
+    /* Hide default leaflet controls styling override */
+    .leaflet-control-zoom {
+      display: none !important;
+    }
+
+    .leaflet-control-attribution {
+      background: rgba(10, 14, 23, 0.8) !important;
+      color: var(--text-muted) !important;
+      font-size: 0.65rem !important;
+      border-radius: 4px !important;
+    }
+
+    .leaflet-control-attribution a {
+      color: var(--accent-indigo-light) !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <button class="btn-toggle-sidebar" id="btnToggleSidebar" aria-label="Toggle Sidebar">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="header-logo">
+        <i class="fa-solid fa-traffic-light"></i>
+      </div>
+      <div>
+        <div class="header-title">แผนที่จุดไฟแดง จ.เพชรบุรี</div>
+        <div class="header-subtitle">Traffic Lights Map — Phetchaburi Province</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-badge">
+        <div class="pulse-dot"></div>
+        <span id="totalCount">0 จุด</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Main Layout -->
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="searchInput" placeholder="ค้นหาแยก, ถนน, อำเภอ...">
+        </div>
+        <div class="filter-tabs" id="filterTabs">
+          <button class="filter-tab active" data-filter="all">ทั้งหมด</button>
+          <button class="filter-tab" data-filter="อ.เมือง">อ.เมือง</button>
+          <button class="filter-tab" data-filter="อ.ท่ายาง">อ.ท่ายาง</button>
+          <button class="filter-tab" data-filter="อ.ชะอำ">อ.ชะอำ</button>
+          <button class="filter-tab" data-filter="อ.เขาย้อย">อ.เขาย้อย</button>
+          <button class="filter-tab" data-filter="อ.บ้านลาด">อ.บ้านลาด</button>
+          <button class="filter-tab" data-filter="อ.บ้านแหลม">อ.บ้านแหลม</button>
+          <button class="filter-tab" data-filter="อ.แก่งกระจาน">อ.แก่งกระจาน</button>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-chip">
+          <div class="stat-chip-value" id="statIntersections">0</div>
+          <div class="stat-chip-label">สี่แยก</div>
+        </div>
+        <div class="stat-chip">
+          <div class="stat-chip-value" id="statJunctions">0</div>
+          <div class="stat-chip-label">สามแยก</div>
+        </div>
+        <div class="stat-chip">
+          <div class="stat-chip-value" id="statSpecial">0</div>
+          <div class="stat-chip-label">จุดพิเศษ</div>
+        </div>
+      </div>
+
+      <div class="marker-list" id="markerList"></div>
+    </aside>
+
+    <!-- Map -->
+    <div class="map-wrapper">
+      <div id="map"></div>
+
+      <!-- Map Theme Control (Top-Right) -->
+      <div class="map-theme-control" id="mapThemeControl">
+        <button class="theme-btn active" data-theme="dark" title="Dark Theme">
+          <i class="fa-solid fa-moon"></i>
+          <span>Dark</span>
+        </button>
+        <button class="theme-btn" data-theme="light" title="Google Maps Light Style">
+          <i class="fa-solid fa-sun"></i>
+          <span>Light</span>
+        </button>
+        <button class="theme-btn" data-theme="satellite" title="Satellite View">
+          <i class="fa-solid fa-earth-americas"></i>
+          <span>Satellite</span>
+        </button>
+        <button class="theme-btn" data-theme="terrain" title="Terrain View">
+          <i class="fa-solid fa-mountain"></i>
+          <span>Terrain</span>
+        </button>
+      </div>
+
+      <!-- Legend -->
+      <div class="map-legend">
+        <div class="legend-title">คำอธิบายสัญลักษณ์</div>
+        <div class="legend-item">
+          <div class="legend-dot red"></div>
+          สี่แยกไฟแดง
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot amber"></div>
+          สามแยกไฟแดง
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot cyan"></div>
+          ทางแยกต่างระดับ / จุดพิเศษ
+        </div>
+      </div>
+
+      <!-- Floating Controls -->
+      <div class="map-floating-controls">
+        <button class="map-float-btn" id="btnZoomIn" title="ซูมเข้า">
+          <i class="fa-solid fa-plus"></i>
+        </button>
+        <button class="map-float-btn" id="btnZoomOut" title="ซูมออก">
+          <i class="fa-solid fa-minus"></i>
+        </button>
+        <button class="map-float-btn" id="btnFitAll" title="แสดงทุกจุด">
+          <i class="fa-solid fa-expand"></i>
+        </button>
+        <button class="map-float-btn" id="btnMyLocation" title="ตำแหน่งของฉัน">
+          <i class="fa-solid fa-location-crosshairs"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // ========================================================
+    // DATA: Verified Traffic Light Locations in Phetchaburi Province
+    // Exact GPS Coordinates matched to Google Maps & OpenStreetMap
+    // ========================================================
+    const trafficLights = [
+      // === อำเภอเมืองเพชรบุรี ===
+      {
+        id: 1,
+        name: "สี่แยกบันไดอิฐ (กิโลเมตร 0)",
+        desc: "สี่แยกใหญ่จุดตัดถนนเพชรเกษมสายเก่า (ถ.คีรีรัถยา) กับถนนบันไดอิฐ ทางขึ้นอุทยานประวัติศาสตร์พระนครคีรี (เขาวัง) และไปวัดบันไดอิฐ",
+        lat: 13.104245,
+        lng: 99.941652,
+        type: "intersection",
+        amphoe: "อ.เมือง",
+        road: "ถ.คีรีรัถยา / ถ.บันไดอิฐ",
+        warning: "⚠️ สัญญาณไฟจราจรปล่อยตามจังหวะทิศทาง ให้ระวังรถทางตรงจากฝั่งเขาวัง"
+      },
+      {
+        id: 2,
+        name: "สี่แยกต้นมะม่วง",
+        desc: "สี่แยกสำคัญจุดตัดถนนภูมิรักษ์ ตัดกับทางหลวง 3177 (มุ่งหน้าหาดเจ้าสำราญ) และถนนเพชรเกษมสายเก่า",
+        lat: 13.090562,
+        lng: 99.948210,
+        type: "intersection",
+        amphoe: "อ.เมือง",
+        road: "ถ.ภูมิรักษ์ / ทล.3177 (ไปหาดเจ้าสำราญ)",
+        warning: "⚠️ รถเลี้ยวขวามุ่งหน้าหาดเจ้าสำราญควรระวังรถทางตรงสวนทาง"
+      },
+      {
+        id: 3,
+        name: "สี่แยกสหไทย",
+        desc: "สี่แยกใจกลางเมืองเพชรบุรี ถนนดำเนินเกษม ตัดกับถนนราชดำเนิน/ถนนสุรินทร์ฤาไชย ย่านการค้าหน้าห้างสรรพสินค้าสหไทย",
+        lat: 13.111830,
+        lng: 99.946320,
+        type: "intersection",
+        amphoe: "อ.เมือง",
+        road: "ถ.ดำเนินเกษม / ถ.ราชดำเนิน",
+        warning: "🚗 การจราจรหนาแน่นช่วงเวลาทำการ มีรอบไฟเขียวสั้นระวังสะสม"
+      },
+      {
+        id: 4,
+        name: "สี่แยกโรงเรียนอรุณประดิษฐ",
+        desc: "สี่แยกสัญญาณไฟจราจรหน้าโรงเรียนอรุณประดิษฐ์ ถนนดำเนินเกษม ตัดกับถนนชีสระสระ",
+        lat: 13.108250,
+        lng: 99.949810,
+        type: "intersection",
+        amphoe: "อ.เมือง",
+        road: "ถ.ดำเนินเกษม / ถ.ชีสระสระ",
+        warning: "🏫 รถสะสมหนาแน่นช่วงรับ-ส่งนักเรียน (07:00-08:30 น. และ 15:30-17:00 น.)"
+      },
+      {
+        id: 5,
+        name: "สามแยกบ้านหม้อ",
+        desc: "ทางแยกถนนเพชรเกษม (ทล.4) เลี้ยวเข้าทางหลวง 3177/ตำบลบ้านหม้อ ทางเข้าตัวเมืองเพชรบุรีฝั่งใต้",
+        lat: 13.081720,
+        lng: 99.936740,
+        type: "junction",
+        amphoe: "อ.เมือง",
+        road: "ถ.เพชรเกษม (ทล.4) / ทล.3177",
+        warning: "🚗 จุดชะลอตัวเบี่ยงเข้าตัวเมืองเพชรบุรี"
+      },
+      {
+        id: 6,
+        name: "สี่แยกเคเบิ้ลคาร์เขาวัง (แยกศาลาประชาคม)",
+        desc: "สี่แยกหน้าสถานีรถไฟฟ้าเคเบิ้ลคาร์เขาวัง ถนนเพชรแก้ว ตัดกับถนนคีรีรัถยา",
+        lat: 13.109530,
+        lng: 99.938510,
+        type: "intersection",
+        amphoe: "อ.เมือง",
+        road: "ถ.เพชรแก้ว / ถ.คีรีรัถยา",
+        warning: "🚠 จุดจอดรถนักท่องเที่ยว โปรดระวังคนเดินเท้าข้ามถนน"
+      },
+      {
+        id: 7,
+        name: "แยกวัดมหาธาตุ / ศาลหลักเมือง",
+        desc: "ทางแยกหน้าศาลหลักเมืองเพชรบุรี และวัดมหาธาตุวรวิหาร ถนนดำเนินเกษม ย่านเมืองเก่าริมแม่น้ำเพชรบุรี",
+        lat: 13.113200,
+        lng: 99.944150,
+        type: "intersection",
+        amphoe: "อ.เมือง",
+        road: "ถ.ดำเนินเกษม",
+        warning: "⛩️ เขตย่านเมืองเก่า ถนนแคบ โปรดใช้ความเร็วต่ำ"
+      },
+      {
+        id: 8,
+        name: "สามแยกทางเข้า มรภ.เพชรบุรี (นาวุ้ง)",
+        desc: "ทางแยกสัญญาณไฟจราจร ถนนหาดเจ้าสำราญ (ทล.3177) เลี้ยวเข้ามหาวิทยาลัยราชภัฏเพชรบุรี ต.นาวุ้ง",
+        lat: 13.073333,
+        lng: 99.945278,
+        type: "junction",
+        amphoe: "อ.เมือง",
+        road: "ถ.หาดเจ้าสำราญ (ทล.3177)",
+        warning: "🎓 นักศึกษาและบุคลากรสัญจรหนาแน่นช่วงเวลาเรียน"
+      },
+      {
+        id: 9,
+        name: "แยกนิคมสร้างตนเอง (เพชรเกษม ทล.4)",
+        desc: "สี่แยกไฟแดงบนถนนเพชรเกษม (ทล.4) บริเวณนิคมสร้างตนเอง เชื่อมต่อ อ.เขาย้อย และตัวเมืองเพชรบุรี",
+        lat: 13.136500,
+        lng: 99.921500,
+        type: "intersection",
+        amphoe: "อ.เมือง",
+        road: "ถ.เพชรเกษม (ทล.4)",
+        warning: "🚛 รถบรรทุกและรถทางไกลใช้ความเร็วสูง โปรดสังเกตสัญญาณไฟระยะไกล"
+      },
+      {
+        id: 10,
+        name: "แยกโค้งหัวสะพาน (เพชรเกษม ทล.4)",
+        desc: "จุดทางโค้งอันตรายบนถนนเพชรเกษม ต.หัวสะพาน มีสัญญาณไฟเตือนจราจรและกล้องตรวจจับความเร็ว",
+        lat: 13.148500,
+        lng: 99.912000,
+        type: "special",
+        amphoe: "อ.เมือง",
+        road: "ถ.เพชรเกษม (ทล.4)",
+        warning: "⚠️ ทางโค้งรัศมีแคบ โปรดลดความเร็วไม่เกิน 80 กม./ชม."
+      },
+      {
+        id: 11,
+        name: "แยกหัวนา (ต.โพไร่หวาน)",
+        desc: "สี่แยกไฟแดงเชื่อมต่อระหว่างถนนเพชรเกษมสายใหม่กับสายเก่า บริเวณ ต.โพไร่หวาน อ.เมืองเพชรบุรี",
+        lat: 13.061200,
+        lng: 99.955400,
+        type: "intersection",
+        amphoe: "อ.เมือง",
+        road: "ทล.3177 / ต.โพไร่หวาน",
+        warning: "⚡ จุดเชื่อมต่อเส้นทางเข้า มรภ.เพชรบุรี และไปหาดเจ้าสำราญ"
+      },
+      {
+        id: 12,
+        name: "แยกหนองขนาน (เพชรเกษมสายเก่า)",
+        desc: "ทางแยกสัญญาณไฟจราจรทางเข้าสู่ตำบลหนองขนาน อ.เมืองเพชรบุรี",
+        lat: 13.081667,
+        lng: 99.960278,
+        type: "junction",
+        amphoe: "อ.เมือง",
+        road: "ถ.เพชรเกษมสายเก่า / ต.หนองขนาน",
+        warning: "🚗 จุดตัดทางเข้าชุมชนตำบลหนองขนาน"
+      },
+
+      // === อำเภอท่ายาง ===
+      {
+        id: 13,
+        name: "สามแยกท่ายาง (ทล.4)",
+        desc: "สามแยกใหญ่ทางเข้าตัวอำเภอท่ายาง ถนนเพชรเกษม (ทล.4) ตัดเข้าตลาดท่ายาง มีสะพานยกระดับข้ามแยก",
+        lat: 12.973120,
+        lng: 99.902250,
+        type: "junction",
+        amphoe: "อ.ท่ายาง",
+        road: "ถ.เพชรเกษม (ทล.4)",
+        warning: "🚧 ปริมาณรถหนาแน่นสะสมมากช่วงเทศกาลลงใต้และกลับกรุงเทพฯ"
+      },
+      {
+        id: 14,
+        name: "สี่แยกตลาดท่ายาง",
+        desc: "สี่แยกไฟแดงใจกลางตลาดสดท่ายาง จุดศูนย์กลางการค้าของอำเภอท่ายาง",
+        lat: 12.996150,
+        lng: 99.893890,
+        type: "intersection",
+        amphoe: "อ.ท่ายาง",
+        road: "ถ.ท่ายาง (เขตเทศบาล)",
+        warning: "🛍️ ย่านตลาดสด มีรถจักรยานยนต์และคนเดินเท้าหนาแน่น"
+      },
+      {
+        id: 15,
+        name: "สามแยกทางเข้าแก่งกระจาน (ทล.4 / ทล.3219)",
+        desc: "ทางแยกถนนเพชรเกษม (ทล.4) เลี้ยวขวาเข้าทางหลวง 3219 มุ่งหน้าเขื่อนแก่งกระจานและอุทยานแห่งชาติ",
+        lat: 12.964810,
+        lng: 99.881250,
+        type: "junction",
+        amphoe: "อ.ท่ายาง",
+        road: "ถ.เพชรเกษม (ทล.4) / ทล.3219",
+        warning: "🏞️ เส้นทางท่องเที่ยวหลัก รถเลี้ยวขวาเยอะช่วงวันหยุด"
+      },
+
+      // === อำเภอชะอำ ===
+      {
+        id: 16,
+        name: "สี่แยกชะอำ (ทล.4 / ถ.นราธิป)",
+        desc: "สี่แยกหลักอำเภอชะอำ ถนนเพชรเกษม (ทล.4) ตัดกับถนนนราธิป มุ่งตรงสู่ชายหาดชะอำ",
+        lat: 12.798320,
+        lng: 99.967810,
+        type: "intersection",
+        amphoe: "อ.ชะอำ",
+        road: "ถ.เพชรเกษม (ทล.4) / ถ.นราธิป",
+        warning: "🏖️ ปริมาณรถหนาแน่นมากช่วงเสาร์-อาทิตย์ และวันหยุดนักขัตฤกษ์"
+      },
+      {
+        id: 17,
+        name: "ทางแยกต่างระดับชะอำ (ทล.4 / ทล.37 บายพาส)",
+        desc: "ทางแยกต่างระดับขนาดใหญ่ จุดเริ่มต้นถนนบายพาสชะอำ-ปราณบุรี (ทล.37) เพื่อเลี่ยงเมืองหัวหิน",
+        lat: 12.784444,
+        lng: 99.963889,
+        type: "special",
+        amphoe: "อ.ชะอำ",
+        road: "ถ.เพชรเกษม (ทล.4) / ทล.37 บายพาส",
+        warning: "🧭 เลือกเลนให้ถูก: ชิดขวาไปหัวหิน (ทล.4) / ชิดซ้ายขึ้นบายพาสไปปราณบุรี (ทล.37)"
+      },
+      {
+        id: 18,
+        name: "สามแยกหาดชะอำ (ถ.นราธิป / ถ.ร่วมจิตร)",
+        desc: "ทางแยกสุดถนนนราธิป ตัดถนนเลียบชายหาดร่วมจิตร หน้าหาดชะอำ",
+        lat: 12.801120,
+        lng: 99.972250,
+        type: "junction",
+        amphoe: "อ.ชะอำ",
+        road: "ถ.นราธิป / ถ.ร่วมจิตร",
+        warning: "🚶‍♂️ เขตท่องเที่ยวชายหาด ความเร็วต่ำ คนเดินข้ามถนนตลอดเวลา"
+      },
+      {
+        id: 19,
+        name: "สามแยกหนองแก (ทางเข้าหาดปึกเตียน)",
+        desc: "ทางแยกสัญญาณไฟจราจรบนถนนเพชรเกษม (ทล.4) เลี้ยวเข้าตำบลหนองแก มุ่งหน้าหาดปึกเตียน",
+        lat: 12.875150,
+        lng: 99.966120,
+        type: "junction",
+        amphoe: "อ.ชะอำ",
+        road: "ถ.เพชรเกษม (ทล.4) / หาดปึกเตียน",
+        warning: "🏖️ จุดเลี้ยวเข้าแหล่งท่องเที่ยวหาดปึกเตียน"
+      },
+
+      // === อำเภอเขาย้อย ===
+      {
+        id: 20,
+        name: "สามแยกเขาย้อย (ทล.4)",
+        desc: "ทางแยกหลักเข้าตัวอำเภอเขาย้อย ถนนเพชรเกษม (ทล.4) ประตูแรกสู่จังหวัดเพชรบุรีจากราชบุรี/สมุทรสงคราม",
+        lat: 13.241550,
+        lng: 99.825610,
+        type: "junction",
+        amphoe: "อ.เขาย้อย",
+        road: "ถ.เพชรเกษม (ทล.4)",
+        warning: "🚗 จุดชะลอตัวเลี้ยวเข้าเขาย้อยและอุทยานถ้ำเขาย้อย"
+      },
+      {
+        id: 21,
+        name: "สี่แยกตลาดเขาย้อย",
+        desc: "สี่แยกไฟแดงใจกลางตลาดสดเขาย้อย ย่านชุมชนและสถานที่ราชการอำเภอเขาย้อย",
+        lat: 13.244920,
+        lng: 99.822250,
+        type: "intersection",
+        amphoe: "อ.เขาย้อย",
+        road: "ถ.เขาย้อย (ตัวเมือง)",
+        warning: "🏢 เขตชุมชนโรงเรียนและตลาดสด"
+      },
+
+      // === อำเภอบ้านลาด ===
+      {
+        id: 22,
+        name: "สามแยกบ้านลาด (ทล.4)",
+        desc: "ทางแยกถนนเพชรเกษม (ทล.4) เลี้ยวเข้าอำเภอบ้านลาด เชื่อมต่อทางหลวงท้องถิ่นไปสระพัง",
+        lat: 13.040150,
+        lng: 99.950120,
+        type: "junction",
+        amphoe: "อ.บ้านลาด",
+        road: "ถ.เพชรเกษม (ทล.4)",
+        warning: "🌾 ทางเข้าแหล่งเกษตรกรรมและสถานที่ท่องเที่ยวอำเภอบ้านลาด"
+      },
+      {
+        id: 23,
+        name: "สี่แยกตลาดบ้านลาด",
+        desc: "สี่แยกไฟแดงในเขตเทศบาลตำบลบ้านลาด บริเวณตลาดสดและที่ว่าการอำเภอบ้านลาด",
+        lat: 13.045120,
+        lng: 99.923150,
+        type: "intersection",
+        amphoe: "อ.บ้านลาด",
+        road: "ถ.บ้านลาด",
+        warning: "🏪 สัญญาณไฟจราจรชุมชนบ้านลาด"
+      },
+      {
+        id: 24,
+        name: "สี่แยกห้วยท่าช้าง (บ้านลาด)",
+        desc: "สี่แยกสัญญาณไฟจราจร ต.ห้วยท่าช้าง อ.บ้านลาด จุดตัดเส้นทางขนส่งเกษตรกรรม",
+        lat: 13.025500,
+        lng: 99.892100,
+        type: "intersection",
+        amphoe: "อ.บ้านลาด",
+        road: "ถ.ห้วยท่าช้าง",
+        warning: "🚜 ระวังรถการเกษตรสัญจรข้ามแยก"
+      },
+
+      // === อำเภอบ้านแหลม & อำเภอแก่งกระจาน ===
+      {
+        id: 25,
+        name: "สามแยกบ้านแหลม (ทล.3176)",
+        desc: "ทางแยกเข้าตัวอำเภอบ้านแหลม ทางหลวง 3176 มุ่งหน้าถนนสายเลียบชายทะเล (Scenic Route)",
+        lat: 13.208150,
+        lng: 100.076120,
+        type: "junction",
+        amphoe: "อ.บ้านแหลม",
+        road: "ทล.3176 / อ.บ้านแหลม",
+        warning: "🌊 เส้นทางไปนาเกลือและถนน Scenic Route เลียบอ่าวไทย"
+      },
+      {
+        id: 26,
+        name: "สามแยกอำเภอแก่งกระจาน",
+        desc: "ทางแยกไฟแดงตัวอำเภอแก่งกระจาน ทางหลวง 3219 ก่อนขึ้นสู่อุทยานแห่งชาติแก่งกระจาน",
+        lat: 12.905150,
+        lng: 99.645120,
+        type: "junction",
+        amphoe: "อ.แก่งกระจาน",
+        road: "ทล.3219",
+        warning: "🏕️ เส้นทางขึ้นเขา/เขื่อนแก่งกระจาน โปรดใช้เกียร์ต่ำ"
+      }
+    ];
+
+    // ========================================================
+    // TILE LAYERS & THEME INITIALIZATION
+    // ========================================================
+    const map = L.map('map', {
+      center: [13.05, 99.92],
+      zoom: 11,
+      zoomControl: false,
+      attributionControl: true,
+    });
+
+    const tileLayers = {
+      dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19
+      }),
+      light: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19
+      }),
+      satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP',
+        maxZoom: 18
+      }),
+      terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
+        maxZoom: 17
+      })
+    };
+
+    let currentTileLayer = tileLayers.dark;
+    currentTileLayer.addTo(map);
+
+    function switchTheme(themeKey) {
+      if (currentTileLayer) {
+        map.removeLayer(currentTileLayer);
+      }
+      currentTileLayer = tileLayers[themeKey] || tileLayers.dark;
+      currentTileLayer.addTo(map);
+
+      if (themeKey === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', themeKey);
+      }
+
+      document.querySelectorAll('#mapThemeControl .theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === themeKey);
+      });
+    }
+
+    document.querySelectorAll('#mapThemeControl .theme-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        switchTheme(btn.dataset.theme);
+      });
+    });
+
+    // ========================================================
+    // CUSTOM MARKERS & POPUP WITH NAVIGATION
+    // ========================================================
+    function createCustomIcon(type) {
+      const colorClass = type === 'intersection' ? 'red' : type === 'junction' ? 'amber' : 'cyan';
+      const iconChar = type === 'intersection' ? '✦' : type === 'junction' ? '▲' : '◆';
+
+      return L.divIcon({
+        className: 'custom-marker',
+        html: `
+          <div class="marker-pulse ${colorClass}"></div>
+          <div class="marker-pin ${colorClass}">${iconChar}</div>
+        `,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+        popupAnchor: [0, -16]
+      });
+    }
+
+    function getPopupContent(item) {
+      const typeLabel = item.type === 'intersection' ? 'สี่แยกไฟแดง' : item.type === 'junction' ? 'สามแยกไฟแดง' : 'จุดพิเศษ/เตือนภัย';
+      const iconClass = item.type === 'intersection' ? 'icon-intersection' : item.type === 'junction' ? 'icon-junction' : 'icon-overpass';
+      const icon = item.type === 'intersection' ? 'fa-traffic-light' : item.type === 'junction' ? 'fa-diamond-turn-right' : 'fa-road';
+
+      const navDirUrl = `https://www.google.com/maps/dir/?api=1&destination=${item.lat},${item.lng}`;
+      const navMapUrl = `https://www.google.com/maps/search/?api=1&query=${item.lat},${item.lng}`;
+
+      const warningHtml = item.warning ? `
+        <div style="margin-top: 0.5rem; padding: 0.45rem 0.6rem; background: rgba(245, 158, 11, 0.12); border-left: 3px solid #f59e0b; border-radius: 4px; font-size: 0.75rem; color: #f59e0b; font-weight: 500;">
+          ${item.warning}
+        </div>
+      ` : '';
+
+      return `
+        <div class="popup-content">
+          <div class="popup-header">
+            <div class="popup-icon ${iconClass}">
+              <i class="fa-solid ${icon}"></i>
+            </div>
+            <div class="popup-title">${item.name}</div>
+          </div>
+          <div class="popup-desc">${item.desc}</div>
+          ${warningHtml}
+          <div class="popup-meta" style="margin-top: 0.5rem;">
+            <span class="popup-tag type">${typeLabel}</span>
+            <span class="popup-tag location">${item.amphoe}</span>
+            <span class="popup-tag road">${item.road}</span>
+          </div>
+          <div class="popup-coords" style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem;">
+            <span>📍 ${item.lat.toFixed(6)}°N, ${item.lng.toFixed(6)}°E</span>
+          </div>
+          <div class="popup-nav-actions" style="margin-top: 0.75rem; display: flex; gap: 0.4rem;">
+            <a href="${navDirUrl}" target="_blank" class="btn-nav primary" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 0.45rem 0.6rem; background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: 6px; text-decoration: none; font-size: 0.78rem; font-weight: 600;">
+              <i class="fa-solid fa-diamond-turn-right"></i> นำทางใน Maps
+            </a>
+            <a href="${navMapUrl}" target="_blank" class="btn-nav secondary" style="display: flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 0.45rem 0.6rem; background: rgba(99, 102, 241, 0.15); color: #818cf8; border-radius: 6px; text-decoration: none; font-size: 0.78rem; font-weight: 600;">
+              <i class="fa-solid fa-map-location-dot"></i> ดูจุด
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    // Create markers
+    const markers = [];
+    const markerGroup = L.featureGroup();
+
+    trafficLights.forEach(item => {
+      const marker = L.marker([item.lat, item.lng], {
+        icon: createCustomIcon(item.type)
+      }).bindPopup(getPopupContent(item), {
+        maxWidth: 280,
+        closeButton: true,
+      });
+
+      marker._trafficData = item;
+      markers.push(marker);
+      markerGroup.addLayer(marker);
+    });
+
+    markerGroup.addTo(map);
+
+    // Fit to all markers
+    if (markers.length > 0) {
+      map.fitBounds(markerGroup.getBounds().pad(0.1));
+    }
+
+    // ========================================================
+    // SIDEBAR LIST
+    // ========================================================
+    const markerListEl = document.getElementById('markerList');
+    const searchInput = document.getElementById('searchInput');
+    const totalCountEl = document.getElementById('totalCount');
+    let activeItemId = null;
+
+    function getIconClass(type) {
+      return type === 'intersection' ? 'icon-intersection' : type === 'junction' ? 'icon-junction' : 'icon-overpass';
+    }
+
+    function getIcon(type) {
+      return type === 'intersection' ? 'fa-traffic-light' : type === 'junction' ? 'fa-diamond-turn-right' : 'fa-road';
+    }
+
+    function renderList(items) {
+      if (items.length === 0) {
+        markerListEl.innerHTML = `
+          <div class="no-results">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <p>ไม่พบจุดไฟแดงที่ตรงกับการค้นหา</p>
+          </div>
+        `;
+        return;
+      }
+
+      markerListEl.innerHTML = items.map((item, idx) => `
+        <div class="marker-item ${activeItemId === item.id ? 'active' : ''}" 
+             data-id="${item.id}" onclick="focusMarker(${item.id})">
+          <div class="marker-item-number">${idx + 1}</div>
+          <div class="marker-item-icon ${getIconClass(item.type)}">
+            <i class="fa-solid ${getIcon(item.type)}"></i>
+          </div>
+          <div class="marker-item-info">
+            <div class="marker-item-name">${item.name}</div>
+            <div class="marker-item-desc">${item.desc}</div>
+            <div class="marker-item-meta">
+              <span class="meta-tag amphoe">${item.amphoe}</span>
+              <span class="meta-tag">${item.road}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      totalCountEl.textContent = `${items.length} จุด`;
+    }
+
+    function updateStats(items) {
+      document.getElementById('statIntersections').textContent = items.filter(i => i.type === 'intersection').length;
+      document.getElementById('statJunctions').textContent = items.filter(i => i.type === 'junction').length;
+      document.getElementById('statSpecial').textContent = items.filter(i => i.type === 'special').length;
+    }
+
+    function focusMarker(id) {
+      activeItemId = id;
+      const item = trafficLights.find(i => i.id === id);
+      if (!item) return;
+
+      map.flyTo([item.lat, item.lng], 16, { duration: 0.8 });
+
+      const marker = markers.find(m => m._trafficData.id === id);
+      if (marker) {
+        marker.openPopup();
+      }
+
+      // Update active state in list
+      document.querySelectorAll('.marker-item').forEach(el => {
+        el.classList.toggle('active', parseInt(el.dataset.id) === id);
+      });
+
+      // Close sidebar on mobile
+      if (window.innerWidth <= 768) {
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('open');
+      }
+    }
+
+    // ========================================================
+    // SEARCH & FILTER
+    // ========================================================
+    let currentFilter = 'all';
+
+    function getFilteredItems() {
+      let items = trafficLights;
+
+      if (currentFilter !== 'all') {
+        items = items.filter(i => i.amphoe === currentFilter);
+      }
+
+      const query = searchInput.value.trim().toLowerCase();
+      if (query) {
+        items = items.filter(i =>
+          i.name.toLowerCase().includes(query) ||
+          i.desc.toLowerCase().includes(query) ||
+          i.road.toLowerCase().includes(query) ||
+          i.amphoe.toLowerCase().includes(query)
+        );
+      }
+
+      return items;
+    }
+
+    function applyFilters() {
+      const items = getFilteredItems();
+      renderList(items);
+      updateStats(items);
+
+      // Show/hide markers on map
+      markers.forEach(m => {
+        const isVisible = items.some(i => i.id === m._trafficData.id);
+        if (isVisible) {
+          if (!map.hasLayer(m)) markerGroup.addLayer(m);
+        } else {
+          if (map.hasLayer(m)) markerGroup.removeLayer(m);
+        }
+      });
+
+      // Fit bounds to visible markers
+      const visibleMarkers = markers.filter(m => items.some(i => i.id === m._trafficData.id));
+      if (visibleMarkers.length > 0) {
+        const group = L.featureGroup(visibleMarkers);
+        map.fitBounds(group.getBounds().pad(0.15));
+      }
+    }
+
+    // Filter tabs
+    document.getElementById('filterTabs').addEventListener('click', (e) => {
+      if (e.target.classList.contains('filter-tab')) {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        e.target.classList.add('active');
+        currentFilter = e.target.dataset.filter;
+        applyFilters();
+      }
+    });
+
+    // Search
+    searchInput.addEventListener('input', () => {
+      applyFilters();
+    });
+
+    // ========================================================
+    // MAP CONTROLS
+    // ========================================================
+    document.getElementById('btnZoomIn').addEventListener('click', () => map.zoomIn());
+    document.getElementById('btnZoomOut').addEventListener('click', () => map.zoomOut());
+    document.getElementById('btnFitAll').addEventListener('click', () => {
+      // Reset filter
+      currentFilter = 'all';
+      searchInput.value = '';
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      document.querySelector('[data-filter="all"]').classList.add('active');
+      applyFilters();
+      map.fitBounds(markerGroup.getBounds().pad(0.1));
+    });
+    document.getElementById('btnMyLocation').addEventListener('click', () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            map.flyTo([pos.coords.latitude, pos.coords.longitude], 15, { duration: 1 });
+            L.marker([pos.coords.latitude, pos.coords.longitude], {
+              icon: L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="width:16px;height:16px;background:#6366f1;border:3px solid white;border-radius:50%;box-shadow:0 0 15px rgba(99,102,241,0.5);"></div>`,
+                iconSize: [16, 16],
+                iconAnchor: [8, 8]
+              })
+            }).addTo(map).bindPopup('<div class="popup-content" style="padding:0.5rem;font-size:0.85rem;">📍 ตำแหน่งของคุณ</div>');
+          },
+          () => alert('ไม่สามารถเข้าถึงตำแหน่งของคุณได้')
+        );
+      }
+    });
+
+    // ========================================================
+    // SIDEBAR TOGGLE (Mobile)
+    // ========================================================
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const btnToggle = document.getElementById('btnToggleSidebar');
+
+    btnToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('open');
+    });
+
+    sidebarOverlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('open');
+    });
+
+    // ========================================================
+    // ========================================================
+    // INITIAL RENDER & URL PARAMS HANDLER
+    // ========================================================
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramSearch = urlParams.get('search');
+    const paramFilter = urlParams.get('filter');
+
+    if (paramFilter) {
+      currentFilter = paramFilter;
+      document.querySelectorAll('.filter-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.filter === paramFilter);
+      });
+    }
+
+    if (paramSearch) {
+      searchInput.value = paramSearch;
+    }
+
+    applyFilters();
+
+    // Listen for popup open to sync sidebar
+    map.on('popupopen', (e) => {
+      const marker = e.popup._source;
+      if (marker && marker._trafficData) {
+        activeItemId = marker._trafficData.id;
+        document.querySelectorAll('.marker-item').forEach(el => {
+          el.classList.toggle('active', parseInt(el.dataset.id) === activeItemId);
+        });
+        // Scroll to item
+        const activeEl = document.querySelector(`.marker-item[data-id="${activeItemId}"]`);
+        if (activeEl) {
+          activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>

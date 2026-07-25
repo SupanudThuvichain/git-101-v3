@@ -1,0 +1,27 @@
+{
+  "name": "phetchaburi-traffic-lights-map",
+  "version": "1.0.0",
+  "description": "ระบบแผนที่จุดไฟแดงและทางแยกสำคัญ จังหวัดเพชรบุรี (Phetchaburi Traffic Lights Interactive Map)",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "phetchaburi",
+    "traffic-lights",
+    "gis",
+    "map",
+    "leaflet"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.0",
+    "helmet": "^8.0.0",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
